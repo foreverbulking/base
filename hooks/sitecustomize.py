@@ -3,20 +3,19 @@ import atexit
 import coverage
 import pymongo
 
-# 1. Grab Metadata
 job_name = os.environ.get("JOB_NAME")
 build_id = os.environ.get("BUILD_NUMBER")
-python_version = os.environ.get("PYTHON_VERSION") # Ensure this is exported in Jenkins
+python_version = os.environ.get("PYTHON_VERSION") 
 
 def should_run_coverage():
     if not all([job_name, python_version]):
-        return False # Don't run if not in Jenkins
+        return False 
     
     uri = os.getenv("MONGO_URI")
     client = pymongo.MongoClient(uri)
     db = client['jenkins-box']
     
-    # Check if this specific job/version combo has a baseline
+    # Check if this specific job/version combo has a baseline.
     exists = db.coverage_registry.find_one({
         "job_name": job_name, 
         "python_version": python_version
@@ -37,7 +36,7 @@ if should_run_coverage():
         cov.save()
         cov.xml_report(outfile=os.path.join(output_dir, "coverage.xml"))
         
-        # Now that it's done, register it so we never run it again
+        # Register it so we never run it again.
         uri = os.getenv("MONGO_URI")
         client = pymongo.MongoClient(uri)
         client['jenkins-box'].coverage_registry.insert_one({

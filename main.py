@@ -1,18 +1,22 @@
 import pymongo
 import os
+import datetime
 
-# 1. Connect to the Cluster
 uri = os.getenv("MONGO_URI") 
 client = pymongo.MongoClient(uri)
 
-# 2. Access your specific database
-db = client['jenkins-box'] # Updated to match your name
+db = client['jenkins-box'] 
 
-# 3. Access a collection (like a folder for your records)
 collection = db.build_logs
 
-# 4. Insert data
-data = {"job": "maple-run", "status": "success"}
+data = {
+    "job_name": os.getenv("JOB_NAME", "local_test"),
+    "build_number": os.getenv("BUILD_NUMBER", "0"),
+    "python_version": os.getenv("PYTHON_VERSION", "unknown"),
+    "status": "success",
+    "timestamp": datetime.datetime.now(datetime.timezone.utc)
+}
+
 collection.insert_one(data)
 
-print("Successfully sent data to jenkins-box database!")
+print(f"Successfully logged build {data['build_number']} for {data['job_name']} to MongoDB!")
