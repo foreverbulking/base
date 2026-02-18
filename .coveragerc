@@ -1,0 +1,9 @@
+[run]
+# Measure branch coverage to see if 'if/else' paths are hit
+branch = True
+# Tells coverage to look for code in your specific repo folder
+# This allows coverage to work with multiprocessing if your jobs spawn sub-processes
+parallel = True
+# Ensures sitecustomize.py doesn't accidentally track its own execution
+omit = 
+    */sitecustomize.py

@@ -1,11 +1,12 @@
+import certifi
 import pymongo
 import os
 import datetime
 
-uri = os.getenv("MONGO_URI") 
-client = pymongo.MongoClient(uri)
+uri = os.getenv("MONGO_URI")
+client = pymongo.MongoClient(uri, tlsCAFile=certifi.where())
 
-db = client['jenkins-box'] 
+db = client["jenkins-box"]
 
 collection = db.build_logs
 
@@ -14,9 +15,11 @@ data = {
     "build_number": os.getenv("BUILD_NUMBER", "0"),
     "python_version": os.getenv("PYTHON_VERSION", "unknown"),
     "status": "success",
-    "timestamp": datetime.datetime.now(datetime.timezone.utc)
+    "timestamp": datetime.datetime.now(datetime.timezone.utc),
 }
 
 collection.insert_one(data)
 
-print(f"Successfully logged build {data['build_number']} for {data['job_name']} to MongoDB!")
+print(
+    f"Successfully logged build {data['build_number']} for {data['job_name']} to MongoDB!"
+)
