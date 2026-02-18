@@ -1,2 +1,6 @@
 plan.md
 im-mas-base-weekly-runtime-coverage-plan.pdf
+populate_jenkins.py
+hooks/
+job_configs/
+__pycache__
