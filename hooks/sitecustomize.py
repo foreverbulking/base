@@ -6,12 +6,10 @@ import os
 import sys
 import platform
 import atexit
-import logging
 
-logging.basicConfig(
-    level=logging.INFO, format="[coverage] %(message)s", stream=sys.stderr
-)
-logger = logging.getLogger(__name__)
+
+def log_coverage(message):
+    print(f"[coverage] {message}", file=sys.stderr, flush=True)
 
 
 def _should_run():
@@ -27,7 +25,7 @@ def _should_run():
 
 def _main():
     if not _should_run():
-        logger.info("skipped: not running on Jenkins")
+        log_coverage("skipped: not running on Jenkins")
         return
 
     job_name = os.environ.get("JOB_NAME", "unknown")
@@ -46,11 +44,11 @@ def _main():
 
         # Skip if already recorded
         if registry_collection.find_one({"_id": registry_key}, {"_id": 1}):
-            logger.info(f"skipped: {job_name} already recorded for {python_version}")
+            log_coverage(f"skipped: {job_name} already recorded for {python_version}")
             return
 
     except Exception as e:
-        logger.warning(f"skipped: cannot reach MongoDB for {job_name} ({e})")
+        log_coverage(f"skipped: cannot reach MongoDB for {job_name} ({e})")
         return
 
     # Start coverage
@@ -65,7 +63,7 @@ def _main():
             config_file=coveragerc_path, source=[repo_base_path]
         )
         coverage_instance.start()
-        logger.info(f"started for {job_name}")
+        log_coverage(f"started for {job_name}")
 
         def _stop_coverage():
             try:
@@ -99,16 +97,16 @@ def _main():
                         "coverage_data": coverage_data,
                     }
                 )
-                logger.info(
+                log_coverage(
                     f"completed for {job_name} ({python_version}): {coverage_percent:.1f}%"
                 )
             except Exception as e:
-                logger.warning(f"failed to save for {job_name}: {e}")
+                log_coverage(f"failed to save for {job_name}: {e}")
 
         atexit.register(_stop_coverage)
 
     except Exception as e:
-        logger.error(f"failed to initialize: {e}")
+        log_coverage(f"failed to initialize: {e}")
 
 
 _main()
