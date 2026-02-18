@@ -189,7 +189,8 @@ def fetch_data(tickers):
     logger.info(
         f"Fetching data for {len(tickers)} tickers from {START_DATE} to {END_DATE}..."
     )
-    data = {}
+    data_series = []
+
     for ticker in tickers:
         try:
             # Add a small delay/retry logic if needed, but yfinance handles most
@@ -199,8 +200,7 @@ def fetch_data(tickers):
                 logger.warning(f"No data found for {ticker}")
                 continue
 
-            # yfinance return structure changed in recent versions for multi-ticker vs single
-            # Extract the series we want
+            series = None
             if "Adj Close" in df.columns:
                 series = df["Adj Close"]
             elif "Close" in df.columns:
@@ -209,22 +209,37 @@ def fetch_data(tickers):
                 logger.warning(f"No Close/Adj Close for {ticker}")
                 continue
 
-            # Check if it's a scalar (single value) or series
-            if isinstance(series, (int, float, np.number)):
-                logger.warning(
-                    f"{ticker}: Returned scalar data, expected Series. Skipping."
-                )
+            # Additional check: ensure series is not empty and has datetime index
+            if series is None or series.empty:
+                logger.warning(f"{ticker}: Series is empty/None")
                 continue
 
-            data[ticker] = series
+            # Rename series to ticker so concat works properly
+            if isinstance(series, pd.Series):
+                series.name = ticker
+                data_series.append(series)
+            elif isinstance(series, pd.DataFrame):
+                # Sometimes yfinance returns a DF with ticker as column name if multi-ticker download
+                # But here we do single. Just in case:
+                logger.warning(
+                    f"{ticker}: Returned DataFrame instead of Series. Shape: {series.shape}"
+                )
+                # Try to extract the first column if it looks right
+                if not series.empty:
+                    s = series.iloc[:, 0]
+                    s.name = ticker
+                    data_series.append(s)
+            else:
+                logger.warning(f"{ticker}: Unexpected type {type(series)}")
 
         except Exception as e:
             logger.error(f"Error fetching {ticker}: {e}")
 
-    if not data:
-        return pd.DataFrame()  # Empty frame
+    if not data_series:
+        return pd.DataFrame()
 
-    return pd.DataFrame(data)
+    # Use concat to align on index (dates) automatically
+    return pd.concat(data_series, axis=1)
 
 
 def main():
