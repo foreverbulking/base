@@ -9,7 +9,7 @@ import atexit
 import logging
 
 logging.basicConfig(
-    level=logging.INFO, format="[coverage] %(message)s", stream=sys.stdout
+    level=logging.INFO, format="[coverage] %(message)s", stream=sys.stderr
 )
 logger = logging.getLogger(__name__)
 

@@ -194,16 +194,36 @@ def fetch_data(tickers):
         try:
             # Add a small delay/retry logic if needed, but yfinance handles most
             df = yf.download(ticker, start=START_DATE, end=END_DATE, progress=False)
-            if not df.empty:
-                # Use 'Adj Close' if available, else 'Close'
-                if "Adj Close" in df.columns:
-                    data[ticker] = df["Adj Close"]
-                elif "Close" in df.columns:
-                    data[ticker] = df["Close"]
-            else:
+
+            if df.empty:
                 logger.warning(f"No data found for {ticker}")
+                continue
+
+            # yfinance return structure changed in recent versions for multi-ticker vs single
+            # Extract the series we want
+            if "Adj Close" in df.columns:
+                series = df["Adj Close"]
+            elif "Close" in df.columns:
+                series = df["Close"]
+            else:
+                logger.warning(f"No Close/Adj Close for {ticker}")
+                continue
+
+            # Check if it's a scalar (single value) or series
+            if isinstance(series, (int, float, np.number)):
+                logger.warning(
+                    f"{ticker}: Returned scalar data, expected Series. Skipping."
+                )
+                continue
+
+            data[ticker] = series
+
         except Exception as e:
             logger.error(f"Error fetching {ticker}: {e}")
+
+    if not data:
+        return pd.DataFrame()  # Empty frame
+
     return pd.DataFrame(data)
 
 
