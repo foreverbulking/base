@@ -7,3 +7,4 @@ parallel = True
 # Ensures sitecustomize.py doesn't accidentally track its own execution
 omit = 
     */sitecustomize.py
+    */dal.py

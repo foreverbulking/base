@@ -38,7 +38,7 @@ def _main():
         if repo_base_path not in sys.path:
             sys.path.insert(0, repo_base_path)
 
-        import dal as dal
+        import utils.dal.dal as dal
 
         registry_collection = dal.get_db().db["coverage_registry"]
 
